@@ -1,0 +1,363 @@
+###############################################################
+# Universal Health Coverage Readiness Index for Nigeria
+#
+# PART 1A
+# Data Loading, Cleaning, Exploratory Data Analysis (EDA)
+###############################################################
+
+import os
+import warnings
+
+warnings.filterwarnings("ignore")
+
+import numpy as np
+import pandas as pd
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+
+###############################################################
+# Project Directories
+###############################################################
+
+os.makedirs("outputs", exist_ok=True)
+os.makedirs("outputs/figures", exist_ok=True)
+os.makedirs("outputs/reports", exist_ok=True)
+os.makedirs("models", exist_ok=True)
+
+###############################################################
+# Load Dataset
+###############################################################
+
+DATA_PATH = "Universal_Health_Coverage_Readiness_Index_Nigeria_Synthetic_Dataset.csv"
+
+df = pd.read_csv(DATA_PATH)
+
+print("=" * 70)
+print("UNIVERSAL HEALTH COVERAGE READINESS INDEX FOR NIGERIA")
+print("=" * 70)
+
+print("\nDataset Loaded Successfully\n")
+
+###############################################################
+# Basic Information
+###############################################################
+
+print(df.head())
+
+print("\nDataset Shape")
+
+print(df.shape)
+
+print("\nDataset Information")
+
+print(df.info())
+
+print("\nSummary Statistics")
+
+print(df.describe(include="all"))
+
+###############################################################
+# Missing Values
+###############################################################
+
+print("\nMissing Values")
+
+missing = df.isnull().sum()
+
+print(missing)
+
+missing.to_csv(
+    "outputs/reports/missing_values.csv"
+)
+
+###############################################################
+# Duplicate Rows
+###############################################################
+
+duplicates = df.duplicated().sum()
+
+print("\nDuplicate Rows:", duplicates)
+
+df = df.drop_duplicates()
+
+###############################################################
+# Data Types
+###############################################################
+
+print("\nColumn Types")
+
+print(df.dtypes)
+
+###############################################################
+# Target Distribution
+###############################################################
+
+print("\nReadiness Category Distribution")
+
+print(df["Readiness_Category"].value_counts())
+
+print(
+    df["Readiness_Category"].value_counts(normalize=True)
+)
+
+###############################################################
+# Numerical & Categorical Features
+###############################################################
+
+numerical_columns = df.select_dtypes(
+    include=np.number
+).columns.tolist()
+
+categorical_columns = df.select_dtypes(
+    include=["object", "category"]
+).columns.tolist()
+
+print("\nNumerical Features")
+
+print(numerical_columns)
+
+print("\nCategorical Features")
+
+print(categorical_columns)
+
+###############################################################
+# Save Feature Lists
+###############################################################
+
+pd.Series(
+    numerical_columns
+).to_csv(
+    "outputs/reports/numerical_columns.csv",
+    index=False
+)
+
+pd.Series(
+    categorical_columns
+).to_csv(
+    "outputs/reports/categorical_columns.csv",
+    index=False
+)
+
+###############################################################
+# Plot Settings
+###############################################################
+
+plt.style.use("ggplot")
+
+sns.set(font_scale=1)
+
+###############################################################
+# Readiness Category
+###############################################################
+
+plt.figure(figsize=(7,5))
+
+sns.countplot(
+    data=df,
+    x="Readiness_Category",
+    order=["Low","Moderate","High"]
+)
+
+plt.title("Universal Health Coverage Readiness")
+
+plt.savefig(
+    "outputs/figures/readiness_category.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.close()
+
+###############################################################
+# State Distribution
+###############################################################
+
+plt.figure(figsize=(14,6))
+
+sns.countplot(
+    data=df,
+    x="State"
+)
+
+plt.xticks(rotation=90)
+
+plt.title("Records by State")
+
+plt.savefig(
+    "outputs/figures/state_distribution.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.close()
+
+###############################################################
+# Area Type
+###############################################################
+
+plt.figure(figsize=(6,5))
+
+sns.countplot(
+    data=df,
+    x="Area_Type"
+)
+
+plt.title("Urban vs Rural")
+
+plt.savefig(
+    "outputs/figures/urban_rural.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.close()
+
+###############################################################
+# Population Distribution
+###############################################################
+
+plt.figure(figsize=(8,5))
+
+sns.histplot(
+    df["Population"],
+    bins=40,
+    kde=True
+)
+
+plt.title("Population Distribution")
+
+plt.savefig(
+    "outputs/figures/population_distribution.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.close()
+
+###############################################################
+# UHC Readiness Index
+###############################################################
+
+plt.figure(figsize=(8,5))
+
+sns.histplot(
+    df["UHC_Readiness_Index"],
+    bins=30,
+    kde=True
+)
+
+plt.title("UHC Readiness Index")
+
+plt.savefig(
+    "outputs/figures/uhc_readiness_index.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.close()
+
+###############################################################
+# Insurance Coverage
+###############################################################
+
+plt.figure(figsize=(8,5))
+
+sns.histplot(
+    df["Insurance_Coverage_pct"],
+    bins=30,
+    kde=True
+)
+
+plt.title("Health Insurance Coverage")
+
+plt.savefig(
+    "outputs/figures/insurance_coverage.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.close()
+
+###############################################################
+# Correlation Matrix
+###############################################################
+
+numeric_df = df.select_dtypes(include=np.number)
+
+plt.figure(figsize=(12,10))
+
+sns.heatmap(
+    numeric_df.corr(),
+    cmap="coolwarm",
+    annot=True,
+    fmt=".2f"
+)
+
+plt.title("Correlation Matrix")
+
+plt.savefig(
+    "outputs/figures/correlation_matrix.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.close()
+
+###############################################################
+# Outlier Detection
+###############################################################
+
+numeric_features = [
+
+    "Doctors_per_1000",
+
+    "Nurses_per_1000",
+
+    "Insurance_Coverage_pct",
+
+    "Immunization_Coverage_pct",
+
+    "Out_of_Pocket_Expenditure_pct",
+
+    "Avg_Travel_Time_to_Facility_min",
+
+    "UHC_Readiness_Index"
+
+]
+
+for column in numeric_features:
+
+    plt.figure(figsize=(8,4))
+
+    sns.boxplot(
+        x=df[column]
+    )
+
+    plt.title(column)
+
+    plt.savefig(
+        f"outputs/figures/{column}_boxplot.png",
+        dpi=300,
+        bbox_inches="tight"
+    )
+
+    plt.close()
+
+###############################################################
+# Save Clean Dataset
+###############################################################
+
+df.to_csv(
+
+    "outputs/reports/clean_dataset.csv",
+
+    index=False
+
+)
+
+print("\nEDA Completed Successfully")
+
+print("\nPART 1A COMPLETED")
