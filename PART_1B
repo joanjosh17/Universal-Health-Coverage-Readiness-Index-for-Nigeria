@@ -1,0 +1,477 @@
+###############################################################
+# PART 1B
+# Feature Engineering & Advanced Exploratory Analysis
+###############################################################
+
+from sklearn.preprocessing import LabelEncoder
+
+print("=" * 70)
+print("PART 1B")
+print("Feature Engineering & Advanced EDA")
+print("=" * 70)
+
+###############################################################
+# Feature Engineering
+###############################################################
+
+# Health Facilities per 100,000 Population
+df["Facilities_per_100k"] = (
+    df["Health_Facilities"] /
+    df["Population"]
+) * 100000
+
+# Doctor Density Score
+df["Doctor_Availability_Score"] = (
+    df["Doctors_per_1000"] * 100
+)
+
+# Nurse Density Score
+df["Nurse_Availability_Score"] = (
+    df["Nurses_per_1000"] * 100
+)
+
+# Workforce Density
+df["Healthcare_Workforce_Density"] = (
+    df["Doctors_per_1000"] +
+    df["Nurses_per_1000"]
+)
+
+# Service Coverage
+df["Service_Coverage_Index"] = (
+
+    df["Insurance_Coverage_pct"] +
+
+    df["Immunization_Coverage_pct"] +
+
+    df["Skilled_Birth_Attendance_pct"]
+
+) / 3
+
+# Infrastructure Index
+df["Infrastructure_Index"] = (
+
+    df["Improved_Water_Access_pct"] +
+
+    df["Electricity_Availability_pct"]
+
+) / 2
+
+# Financial Protection
+df["Financial_Protection_Index"] = (
+
+    100 -
+
+    df["Out_of_Pocket_Expenditure_pct"]
+
+)
+
+# Accessibility
+df["Accessibility_Index"] = (
+
+    120 -
+
+    df["Avg_Travel_Time_to_Facility_min"]
+
+)
+
+###############################################################
+# Risk Classification
+###############################################################
+
+df["Accessibility_Risk"] = np.where(
+
+    df["Avg_Travel_Time_to_Facility_min"] > 60,
+
+    "High",
+
+    "Low"
+
+)
+
+df["Insurance_Level"] = pd.cut(
+
+    df["Insurance_Coverage_pct"],
+
+    bins=[0,20,40,60,80,100],
+
+    labels=[
+
+        "Very Low",
+
+        "Low",
+
+        "Moderate",
+
+        "High",
+
+        "Very High"
+
+    ]
+
+)
+
+###############################################################
+# Label Encoding
+###############################################################
+
+encoder = LabelEncoder()
+
+df["Readiness_Label"] = encoder.fit_transform(
+    df["Readiness_Category"]
+)
+
+###############################################################
+# Average Readiness by State
+###############################################################
+
+state_summary = (
+
+    df
+
+    .groupby("State")
+
+    .agg({
+
+        "UHC_Readiness_Index":"mean",
+
+        "Insurance_Coverage_pct":"mean",
+
+        "Doctors_per_1000":"mean",
+
+        "Nurses_per_1000":"mean",
+
+        "Health_Facilities":"mean"
+
+    })
+
+    .round(2)
+
+)
+
+state_summary.to_csv(
+
+    "outputs/reports/state_summary.csv"
+
+)
+
+###############################################################
+# Top Performing States
+###############################################################
+
+top_states = (
+
+    state_summary
+
+    .sort_values(
+
+        by="UHC_Readiness_Index",
+
+        ascending=False
+
+    )
+
+)
+
+top_states.to_csv(
+
+    "outputs/reports/top_states.csv"
+
+)
+
+###############################################################
+# Bottom Performing States
+###############################################################
+
+bottom_states = (
+
+    state_summary
+
+    .sort_values(
+
+        by="UHC_Readiness_Index",
+
+        ascending=True
+
+    )
+
+)
+
+bottom_states.to_csv(
+
+    "outputs/reports/bottom_states.csv"
+
+)
+
+###############################################################
+# Average Readiness by State Plot
+###############################################################
+
+plt.figure(figsize=(15,7))
+
+top_states["UHC_Readiness_Index"].plot(
+
+    kind="bar"
+
+)
+
+plt.ylabel("Readiness Index")
+
+plt.title("Average UHC Readiness by State")
+
+plt.tight_layout()
+
+plt.savefig(
+
+    "outputs/figures/state_readiness.png",
+
+    dpi=300
+
+)
+
+plt.close()
+
+###############################################################
+# Urban vs Rural
+###############################################################
+
+plt.figure(figsize=(8,6))
+
+sns.boxplot(
+
+    data=df,
+
+    x="Area_Type",
+
+    y="UHC_Readiness_Index"
+
+)
+
+plt.title("Urban vs Rural Readiness")
+
+plt.savefig(
+
+    "outputs/figures/urban_rural_readiness.png",
+
+    dpi=300,
+
+    bbox_inches="tight"
+
+)
+
+plt.close()
+
+###############################################################
+# Correlation Heatmap
+###############################################################
+
+engineered = [
+
+    "Facilities_per_100k",
+
+    "Healthcare_Workforce_Density",
+
+    "Service_Coverage_Index",
+
+    "Infrastructure_Index",
+
+    "Financial_Protection_Index",
+
+    "Accessibility_Index",
+
+    "UHC_Readiness_Index"
+
+]
+
+plt.figure(figsize=(10,8))
+
+sns.heatmap(
+
+    df[engineered].corr(),
+
+    annot=True,
+
+    cmap="RdYlGn",
+
+    fmt=".2f"
+
+)
+
+plt.title("Engineered Feature Correlation")
+
+plt.savefig(
+
+    "outputs/figures/engineered_correlation.png",
+
+    dpi=300,
+
+    bbox_inches="tight"
+
+)
+
+plt.close()
+
+###############################################################
+# Pairplot
+###############################################################
+
+pair_columns = [
+
+    "Insurance_Coverage_pct",
+
+    "Doctors_per_1000",
+
+    "Nurses_per_1000",
+
+    "Service_Coverage_Index",
+
+    "Infrastructure_Index",
+
+    "UHC_Readiness_Index"
+
+]
+
+sns.pairplot(
+
+    df[pair_columns]
+
+)
+
+plt.savefig(
+
+    "outputs/figures/pairplot.png",
+
+    dpi=300
+
+)
+
+plt.close()
+
+###############################################################
+# Classification Target
+###############################################################
+
+TARGET = "Readiness_Category"
+
+X = df.drop(
+
+    columns=[
+
+        "Record_ID",
+
+        "Readiness_Category",
+
+        "Readiness_Label"
+
+    ]
+
+)
+
+y = df[TARGET]
+
+###############################################################
+# Regression Target
+###############################################################
+
+y_regression = df["UHC_Readiness_Index"]
+
+###############################################################
+# Feature Types
+###############################################################
+
+categorical_features = X.select_dtypes(
+
+    include=["object","category"]
+
+).columns.tolist()
+
+numerical_features = X.select_dtypes(
+
+    include=np.number
+
+).columns.tolist()
+
+###############################################################
+# Save Feature Lists
+###############################################################
+
+pd.Series(
+
+    numerical_features
+
+).to_csv(
+
+    "outputs/reports/model_numerical_features.csv",
+
+    index=False
+
+)
+
+pd.Series(
+
+    categorical_features
+
+).to_csv(
+
+    "outputs/reports/model_categorical_features.csv",
+
+    index=False
+
+)
+
+###############################################################
+# Train-Test Split
+###############################################################
+
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+
+    X,
+
+    y,
+
+    test_size=0.20,
+
+    stratify=y,
+
+    random_state=42
+
+)
+
+###############################################################
+# Regression Split
+###############################################################
+
+X_train_reg, X_test_reg, y_train_reg, y_test_reg = train_test_split(
+
+    X,
+
+    y_regression,
+
+    test_size=0.20,
+
+    random_state=42
+
+)
+
+print("\nClassification Training Shape")
+
+print(X_train.shape)
+
+print("\nRegression Training Shape")
+
+print(X_train_reg.shape)
+
+###############################################################
+# Save Final Dataset
+###############################################################
+
+df.to_csv(
+
+    "outputs/reports/final_engineered_dataset.csv",
+
+    index=False
+
+)
+
+print("\nPART 1B COMPLETED SUCCESSFULLY")
