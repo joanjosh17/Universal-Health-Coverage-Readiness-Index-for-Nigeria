@@ -1,0 +1,400 @@
+###############################################################
+# PART 3B
+# Explainable AI (SHAP), Feature Importance,
+# Model Persistence & Prediction System
+###############################################################
+
+import joblib
+import shap
+
+###############################################################
+# Load Best Model
+###############################################################
+
+print("=" * 70)
+print("PART 3B")
+print("Explainable AI & Deployment")
+print("=" * 70)
+
+best_model = joblib.load(
+    "models/final_xgboost_classifier.pkl"
+)
+
+###############################################################
+# Save Label Encoder
+###############################################################
+
+joblib.dump(
+    label_encoder,
+    "models/label_encoder.pkl"
+)
+
+###############################################################
+# Save Preprocessor
+###############################################################
+
+joblib.dump(
+    preprocessor,
+    "models/preprocessor.pkl"
+)
+
+###############################################################
+# Feature Importance
+###############################################################
+
+feature_names = (
+
+    best_model
+
+    .named_steps["preprocessor"]
+
+    .get_feature_names_out()
+
+)
+
+feature_importance = (
+
+    best_model
+
+    .named_steps["classifier"]
+
+    .feature_importances_
+
+)
+
+importance_df = pd.DataFrame({
+
+    "Feature":feature_names,
+
+    "Importance":feature_importance
+
+})
+
+importance_df = importance_df.sort_values(
+
+    by="Importance",
+
+    ascending=False
+
+)
+
+importance_df.to_csv(
+
+    "outputs/reports/final_feature_importance.csv",
+
+    index=False
+
+)
+
+###############################################################
+# Top 30 Features
+###############################################################
+
+top30 = importance_df.head(30)
+
+plt.figure(figsize=(12,10))
+
+plt.barh(
+
+    top30["Feature"][::-1],
+
+    top30["Importance"][::-1]
+
+)
+
+plt.title("Top 30 Most Important Features")
+
+plt.xlabel("Importance Score")
+
+plt.tight_layout()
+
+plt.savefig(
+
+    "outputs/figures/final_feature_importance.png",
+
+    dpi=300
+
+)
+
+plt.close()
+
+###############################################################
+# SHAP Explainability
+###############################################################
+
+print("\nGenerating SHAP values...")
+
+X_sample = X_test.sample(
+
+    min(300, len(X_test)),
+
+    random_state=42
+
+)
+
+###############################################################
+# Transform Data
+###############################################################
+
+X_processed = (
+
+    best_model
+
+    .named_steps["preprocessor"]
+
+    .transform(X_sample)
+
+)
+
+###############################################################
+# SHAP Explainer
+###############################################################
+
+explainer = shap.TreeExplainer(
+
+    best_model.named_steps["classifier"]
+
+)
+
+shap_values = explainer.shap_values(
+
+    X_processed
+
+)
+
+###############################################################
+# Summary Plot
+###############################################################
+
+shap.summary_plot(
+
+    shap_values,
+
+    X_processed,
+
+    feature_names=feature_names,
+
+    show=False
+
+)
+
+plt.tight_layout()
+
+plt.savefig(
+
+    "outputs/figures/shap_summary.png",
+
+    dpi=300
+
+)
+
+plt.close()
+
+###############################################################
+# Bar Plot
+###############################################################
+
+shap.summary_plot(
+
+    shap_values,
+
+    X_processed,
+
+    feature_names=feature_names,
+
+    plot_type="bar",
+
+    show=False
+
+)
+
+plt.tight_layout()
+
+plt.savefig(
+
+    "outputs/figures/shap_bar.png",
+
+    dpi=300
+
+)
+
+plt.close()
+
+###############################################################
+# Save SHAP Values
+###############################################################
+
+if isinstance(shap_values, list):
+
+    shap_df = pd.DataFrame(
+
+        shap_values[0],
+
+        columns=feature_names
+
+    )
+
+else:
+
+    shap_df = pd.DataFrame(
+
+        shap_values,
+
+        columns=feature_names
+
+    )
+
+shap_df.to_csv(
+
+    "outputs/reports/shap_values.csv",
+
+    index=False
+
+)
+
+###############################################################
+# Prediction on Entire Dataset
+###############################################################
+
+predictions = best_model.predict(X)
+
+prediction_labels = label_encoder.inverse_transform(
+
+    predictions
+
+)
+
+prediction_probabilities = best_model.predict_proba(X)
+
+prediction_df = X.copy()
+
+prediction_df["Predicted_Readiness"] = prediction_labels
+
+prediction_df["Confidence"] = prediction_probabilities.max(axis=1)
+
+prediction_df.to_csv(
+
+    "outputs/reports/all_predictions.csv",
+
+    index=False
+
+)
+
+###############################################################
+# Sample Prediction Function
+###############################################################
+
+def predict_readiness(sample_dataframe):
+
+    prediction = best_model.predict(sample_dataframe)
+
+    probability = best_model.predict_proba(sample_dataframe)
+
+    label = label_encoder.inverse_transform(prediction)
+
+    return pd.DataFrame({
+
+        "Prediction":label,
+
+        "Confidence":probability.max(axis=1)
+
+    })
+
+###############################################################
+# Example Prediction
+###############################################################
+
+example = X.iloc[[0]]
+
+example_result = predict_readiness(example)
+
+print("\nExample Prediction")
+
+print(example_result)
+
+###############################################################
+# Save Deployment Assets
+###############################################################
+
+joblib.dump(
+
+    best_model,
+
+    "models/uhc_readiness_model.pkl"
+
+)
+
+###############################################################
+# Final Performance Report
+###############################################################
+
+final_report = pd.DataFrame({
+
+    "Metric":[
+
+        "Classification Model",
+
+        "Regression Model",
+
+        "Total Records",
+
+        "Total Features",
+
+        "Generated Predictions"
+
+    ],
+
+    "Value":[
+
+        best_classifier_name,
+
+        best_regressor_name,
+
+        len(df),
+
+        len(feature_names),
+
+        len(prediction_df)
+
+    ]
+
+})
+
+final_report.to_csv(
+
+    "outputs/reports/project_summary.csv",
+
+    index=False
+
+)
+
+###############################################################
+# Console Summary
+###############################################################
+
+print("\n")
+print("=" * 70)
+print("PROJECT COMPLETED SUCCESSFULLY")
+print("=" * 70)
+
+print("\nModels Saved")
+
+print("✔ uhc_readiness_model.pkl")
+print("✔ preprocessor.pkl")
+print("✔ label_encoder.pkl")
+
+print("\nReports")
+
+print("✔ project_summary.csv")
+print("✔ all_predictions.csv")
+print("✔ final_feature_importance.csv")
+print("✔ shap_values.csv")
+
+print("\nFigures")
+
+print("✔ final_feature_importance.png")
+print("✔ shap_summary.png")
+print("✔ shap_bar.png")
+
+print("\nUniversal Health Coverage Readiness Index for Nigeria")
+print("End-to-End Machine Learning Pipeline Completed.")
