@@ -297,7 +297,7 @@ This project can support:
 
 ## 📄 License
 
-This project is released under the **MIT License** — free to use, adapt, and build upon for research, education, and public health analytics.
+This project is released under the **MIT License** free to use, adapt, and build upon for research, education, and public health analytics.
 See the [LICENSE](LICENSE) file for full details.
 
 ---
