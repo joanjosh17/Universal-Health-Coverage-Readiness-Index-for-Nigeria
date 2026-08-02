@@ -41,7 +41,7 @@ This project develops a **Universal Health Coverage Readiness Index (UHCRI)** fo
 
 ## 🗂️ Dataset
 
-A realistic **synthetic dataset** of approximately **5,000 observations** representing healthcare indicators across Nigeria — no real patient or facility-level data is used.
+A realistic **synthetic dataset** of approximately **5,000 observations** representing healthcare indicators across Nigeria no real patient or facility-level data is used.
 
 ### Features
 
