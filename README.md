@@ -1,4 +1,4 @@
-# 🏥 Universal Health Coverage Readiness Index — Nigeria
+# 🏥 Universal Health Coverage Readiness Index in Nigeria
 
 <div align="center">
 
