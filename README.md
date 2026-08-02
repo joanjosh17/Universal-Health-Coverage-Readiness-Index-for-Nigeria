@@ -111,7 +111,7 @@ Prediction System
 
 1. **Data Cleaning:** Missing value analysis, duplicate detection, and validation of the raw synthetic dataset
 2. **Exploratory Data Analysis:** Descriptive statistics, distribution analysis, correlation analysis, boxplots, histograms, pairplots, urban vs rural comparisons, and state-level healthcare summaries
-3. **Feature Engineering:** Construction of domain-inspired indicators — facilities per 100,000 population, doctor/nurse availability scores, healthcare workforce density, service coverage index, infrastructure index, financial protection index, accessibility index, accessibility risk classification, and insurance level categorisation
+3. **Feature Engineering:** Construction of domain-inspired indicators facilities per 100,000 population, doctor/nurse availability scores, healthcare workforce density, service coverage index, infrastructure index, financial protection index, accessibility index, accessibility risk classification, and insurance level categorisation
 4. **Classification Modelling:** Train Logistic Regression, Decision Tree, Random Forest, Gradient Boosting, Extra Trees, and XGBoost to predict `Readiness_Category`
 5. **Regression Modelling:** Train Linear Regression, Random Forest Regressor, Gradient Boosting Regressor, and Extra Trees Regressor to predict the continuous `UHC_Readiness_Index`
 6. **Hyperparameter Tuning:** Optimise the best-performing models using RandomizedSearchCV with Stratified K-Fold cross-validation
