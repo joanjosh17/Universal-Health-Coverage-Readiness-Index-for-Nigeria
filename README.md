@@ -269,7 +269,7 @@ This project can support:
 **Current Limitations:**
 - The dataset is **fully synthetic**, so absolute readiness values are illustrative rather than reflective of real state-level conditions
 - Indicators are simulated at an **aggregate state level**, without local government area (LGA) or facility-level granularity
-- The model does not yet incorporate **temporal dynamics** — it represents a single-period snapshot rather than a monitored trend
+- The model does not yet incorporate **temporal dynamics** it represents a single-period snapshot rather than a monitored trend
 - **Financial protection and accessibility indices** are proxy constructs and would benefit from validation against real household survey data
 
 **Future Improvements:**
